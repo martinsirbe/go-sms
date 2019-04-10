@@ -1,0 +1,6 @@
+aws_access_key: AKIA34K435KLR13KDT666 # this is a dummy value... :)
+aws_secret_access_key: lk13hJSFkl35ADfsdDFtkl34fF9D9h9ktjrfaewr # this is a dummy value too... ;)
+aws_region: eu-west-1
+sender_id: JohnDoe
+max_price: 0.03
+sms_type: Promotional

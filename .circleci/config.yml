@@ -1,0 +1,13 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1
+    working_directory: /go/src/github.com/martinsirbe/go-sms
+    steps:
+      - checkout
+      - run: go get -v -t -d ./...
+      - run: go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+      - run: make lint
+      - run: make test
+      - run: make build
