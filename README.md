@@ -1,7 +1,8 @@
 # Go SMS
 A simple app for sending Short Message Service (SMS) text messages using AWS Simple Notification Service.  
 
-![json_ast_badge](https://img.shields.io/badge/SNS-green.svg?logo=amazon-aws&style=flat) ![code_coverage_badge](https://img.shields.io/badge/Go%20Coverage-84%25-brightgreen.svg?style=flat)    
+![json_ast_badge](https://img.shields.io/badge/SNS-green.svg?logo=amazon-aws&style=flat) ![code_coverage_badge](https://img.shields.io/badge/Go%20Coverage-84%25-brightgreen.svg?style=flat) [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmartinsirbe%2Fgo-sms.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmartinsirbe%2Fgo-sms?ref=badge_shield)
+   
 
 ## Build
 Run `make build`, and you should see `go-sms` binary in `bin` directory.  
@@ -86,3 +87,7 @@ func main() {
 [1]: https://docs.aws.amazon.com/sns/latest/dg/sms_supported-countries.html
 [2]: https://aws.amazon.com/sns/sms-pricing/
 [3]: https://github.com/golangci/golangci-lint
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmartinsirbe%2Fgo-sms.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmartinsirbe%2Fgo-sms?ref=badge_large)
