@@ -1,4 +1,6 @@
-version: 2
+version: 2.1
+orbs:
+  codecov: codecov/codecov@1.0.4
 jobs:
   build:
     docker:
@@ -10,4 +12,6 @@ jobs:
       - run: go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
       - run: make lint
       - run: make test
+      - codecov/upload:
+          file: coverage.txt
       - run: make build

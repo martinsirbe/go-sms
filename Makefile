@@ -4,7 +4,7 @@ go-gen:
 
 .PHONY: test
 test:
-	@go test -v --cover ./...
+	@go test -v -cover -race -coverprofile=coverage.txt -covermode=atomic ./...
 
 .PHONY: build
 build:
