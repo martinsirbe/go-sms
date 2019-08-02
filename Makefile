@@ -1,3 +1,6 @@
+PROJECT_NAME := go-sms
+GOLANGCI_LINT_VER := v1.17.1
+
 .PHONY: go-gen
 go-gen:
 	@go generate ./...
@@ -12,4 +15,6 @@ build:
 
 .PHONY: lint
 lint:
-	golangci-lint run -v
+	@docker run --rm -w /src/github.com/martinsirbe/$(PROJECT_NAME) \
+	    -v "$$PWD":/src/github.com/martinsirbe/$(PROJECT_NAME) \
+	     golangci/golangci-lint:$(GOLANGCI_LINT_VER) golangci-lint run -v
