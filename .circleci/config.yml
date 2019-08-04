@@ -38,3 +38,21 @@ jobs:
             echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             docker push martinsirbe/go-sms:$(git rev-parse --short $CIRCLE_SHA1)
             docker push martinsirbe/go-sms:latest
+workflows:
+  version: 2
+  commit:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: master
+  periodic-build:
+    triggers:
+      - schedule:
+          cron: "0 0 * * 0"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - build
