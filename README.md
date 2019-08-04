@@ -9,7 +9,11 @@ A simple app for sending Short Message Service (SMS) text messages using AWS Sim
 
 
 ## Build
-Run `make build`, and you should see `go-sms` binary in `bin` directory.  
+Run `make build`, and you should see `go-sms` binary in `bin` directory. Alternatively you can build a docker image 
+by running `make docker-build` and run it by `make run`. Note that `config.yaml` should be located in the root of 
+this project which should be based on `config_sample.yaml`.  
+
+You also can use go-sms pre-built docker image by `docker pull martinsirbe/go-sms`.  
 
 ## Configuration
 ### Mandatory

@@ -10,10 +10,31 @@ jobs:
     working_directory: /go/src/github.com/martinsirbe/go-sms
     steps:
       - checkout
-      - run: go mod download
-      - run: go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
-      - run: golangci-lint run -v
-      - run: make test
+      - run:
+          name: Download project dependencies.
+          command: go mod download
+      - run:
+          name: Run golangci-lint.
+          command: |
+            go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+            golangci-lint run -v
+      - run:
+          name: Run tests.
+          command: make test
       - codecov/upload:
           file: coverage.txt
-      - run: make build
+      - setup_remote_docker:
+          version: 18.09.3
+      - run:
+          name: Build a docker image.
+          command: |
+            docker build \
+              -t martinsirbe/go-sms:$(git rev-parse --short $CIRCLE_SHA1) \
+              -t martinsirbe/go-sms:latest \
+              -f Dockerfile .
+      - run:
+          name: Push the docker image to docker hub.
+          command: |
+            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            docker push martinsirbe/go-sms:$(git rev-parse --short $CIRCLE_SHA1)
+            docker push martinsirbe/go-sms:latest
