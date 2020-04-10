@@ -5,8 +5,8 @@ GOLANGCI_LINT_VER := v1.24
 go-gen:
 	@go generate ./...
 
-.PHONY: test
-test:
+.PHONY: tests
+tests:
 	@go test -v -cover -race -coverprofile=coverage.txt -covermode=atomic ./...
 
 .PHONY: build
