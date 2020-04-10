@@ -1,13 +1,13 @@
 package sms_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/martinsirbe/go-sms/pkg/sms"
 	"github.com/martinsirbe/go-sms/pkg/sms/mocks"
@@ -30,121 +30,208 @@ func setupTest(t *testing.T) *testSuite {
 	}
 }
 
-func TestSuccessfullyPublishedSMS(t *testing.T) {
-	ts := setupTest(t)
+func TestSendMessage(t *testing.T) {
+	t.Parallel()
 
 	expectedMessageID := "test"
-	expectedResponse := sns.PublishOutput{
-		MessageId: &expectedMessageID,
+	for name, tc := range map[string]struct {
+		description  string
+		mockResponse *sns.PublishOutput
+		mockError    error
+		assertError  assert.ErrorAssertionFunc
+		expectedID   *string
+	}{
+		"SuccessfullySentMessage": {
+			description:  "Successfully sent SMS message.",
+			mockResponse: &sns.PublishOutput{MessageId: &expectedMessageID},
+			assertError:  assert.NoError,
+			expectedID:   &expectedMessageID,
+		},
+		"FailOnSNSPublish": {
+			description: "An error returned when failed to send the message.",
+			mockError:   errors.New("broken"),
+			assertError: assert.Error,
+		},
+	} {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			t.Log(tc.description)
+			t.Parallel()
+
+			ts := setupTest(t)
+
+			ts.mockedSNS.EXPECT().
+				Publish(gomock.Any()).
+				Return(tc.mockResponse, tc.mockError).
+				Times(1)
+
+			messageID, err := ts.sender.Send("test-msg", "test-receiver")
+			tc.assertError(t, err)
+			assert.Equal(t, tc.expectedID, messageID)
+		})
 	}
-	ts.mockedSNS.EXPECT().Publish(gomock.Any()).Return(&expectedResponse, nil).Times(1)
 
-	actualMessageID, err := ts.sender.Send("test-msg", "test-receiver")
-	assert.Nil(t, err)
-	assert.Equal(t, expectedMessageID, *actualMessageID)
 }
 
-func TestOnFailedSMSPublishReturnError(t *testing.T) {
-	ts := setupTest(t)
+func TestMessageAttributes(t *testing.T) {
+	t.Parallel()
 
-	ts.mockedSNS.EXPECT().Publish(gomock.Any()).Return(nil, errors.New("bad")).Times(1)
+	for name, tc := range map[string]struct {
+		description      string
+		attribute        string
+		expectedValue    string
+		assertValueIsSet assert.ValueAssertionFunc
+		setAttribute     func(s *sms.Sender)
+	}{
+		"SetSenderID": {
+			description:      "Successfully set the sender ID SMS attribute.",
+			attribute:        sms.SenderIDSMSAttribute,
+			expectedValue:    "test-sender-id",
+			assertValueIsSet: assert.NotEmpty,
+			setAttribute: func(sender *sms.Sender) {
+				sender.WithSenderID("test-sender-id")
+			},
+		},
+		"FailSetSenderIDOnEmptyString": {
+			description:      "Fail to set sender ID SMS attribute when an empty string provided.",
+			attribute:        sms.SenderIDSMSAttribute,
+			assertValueIsSet: assert.Empty,
+			setAttribute: func(sender *sms.Sender) {
+				sender.WithSenderID("")
+			},
+		},
+		"FailSetSenderIDOnEmptyStringWithWhitespaces": {
+			description:      "Fail to set sender ID SMS attribute when an empty string provided.",
+			attribute:        sms.SenderIDSMSAttribute,
+			assertValueIsSet: assert.Empty,
+			setAttribute: func(sender *sms.Sender) {
+				sender.WithSenderID("\n\t\t\t\t  \t\n")
+			},
+		},
+		"SetMaxPrice": {
+			description:      "Successfully set the max price SMS attribute when over 1 USD cent.",
+			attribute:        sms.MaxPriceSMSAttribute,
+			expectedValue:    "0.05",
+			assertValueIsSet: assert.NotEmpty,
+			setAttribute: func(sender *sms.Sender) {
+				sender.WithMaxPrice(0.05)
+			},
+		},
+		"FailSetMaxPriceBellowOneCent": {
+			description:      "Fail to set max price SMS attribute when the provided value is bellow 1 USD cent.",
+			attribute:        sms.MaxPriceSMSAttribute,
+			assertValueIsSet: assert.Empty,
+			setAttribute: func(sender *sms.Sender) {
+				sender.WithMaxPrice(0)
+			},
+		},
+		"SetMessageTypeAsPromotional": {
+			description:      "Successfully set the message type SMS attribute as promotional.",
+			attribute:        sms.MessageTypeSMSAttribute,
+			expectedValue:    sms.Promotional.String(),
+			assertValueIsSet: assert.NotEmpty,
+			setAttribute: func(sender *sms.Sender) {
+				sender.WithMessageType(sms.Promotional)
+			},
+		},
+		"SetMessageTypeAsTransactional": {
+			description:      "Successfully set the message type SMS attribute as transactional.",
+			attribute:        sms.MessageTypeSMSAttribute,
+			expectedValue:    sms.Transactional.String(),
+			assertValueIsSet: assert.NotEmpty,
+			setAttribute: func(sender *sms.Sender) {
+				sender.WithMessageType(sms.Transactional)
+			},
+		},
+		"FailSetMessageType": {
+			description:      "When message type isn't valid, message type SMS attribute isn't set.",
+			attribute:        sms.MessageTypeSMSAttribute,
+			assertValueIsSet: assert.Empty,
+			setAttribute: func(sender *sms.Sender) {
+				sender.WithMessageType("FooBar")
+			},
+		},
+	} {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			t.Log(tc.description)
+			t.Parallel()
 
-	_, err := ts.sender.Send("test-msg", "test-receiver")
-	assert.NotNil(t, err)
+			ts := setupTest(t)
 
-	assert.Equal(t, "failed to publish a text message to test-receiver: bad", err.Error())
+			require.Nil(t, ts.sender.MessageAttributes[tc.attribute])
+
+			tc.setAttribute(ts.sender)
+			tc.assertValueIsSet(t, ts.sender.MessageAttributes[tc.attribute])
+
+			// proceed with further attribute tests only when the attribute value was successfully set
+			if ts.sender.MessageAttributes[tc.attribute] == nil {
+				return
+			}
+
+			switch *ts.sender.MessageAttributes[tc.attribute].DataType {
+			case "String":
+				strVal := ts.sender.MessageAttributes[tc.attribute].StringValue
+				require.NotNil(t, strVal)
+				assert.Equal(t, tc.expectedValue, *strVal)
+			}
+		})
+	}
 }
 
-func TestSuccessfullySetSenderID(t *testing.T) {
-	ts := setupTest(t)
+func TestMessageAttributesCreatedFromConfig(t *testing.T) {
+	t.Parallel()
 
-	assert.Nil(t, ts.sender.MessageAttributes[sms.SenderIDSMSAttribute])
+	for name, tc := range map[string]struct {
+		description      string
+		config           *sms.Config
+		expectedValues   map[string]string
+		assertValueIsSet assert.ValueAssertionFunc
+	}{
+		"Success": {
+			description: "",
+			expectedValues: map[string]string{
+				sms.SenderIDSMSAttribute:    "test-sender-id",
+				sms.MaxPriceSMSAttribute:    "0.07",
+				sms.MessageTypeSMSAttribute: sms.Promotional.String(),
+			},
+			config: &sms.Config{
+				SenderID:    strp("test-sender-id"),
+				MaxPrice:    floatp(0.07),
+				MessageType: strp(sms.Promotional.String()),
+			},
+			assertValueIsSet: assert.NotEmpty,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Log(tc.description)
+			t.Parallel()
 
-	expectedSenderID := "test"
-	ts.sender.WithSenderID(expectedSenderID)
+			attrs := sms.GetMessageAttributes(tc.config)
 
-	assert.NotNil(t, ts.sender.MessageAttributes[sms.SenderIDSMSAttribute].StringValue)
-	assert.Equal(t, expectedSenderID, *ts.sender.MessageAttributes[sms.SenderIDSMSAttribute].StringValue)
+			for _, a := range []string{
+				sms.SenderIDSMSAttribute,
+				sms.MaxPriceSMSAttribute,
+				sms.MessageTypeSMSAttribute,
+			} {
+				attr := attrs[a]
+				tc.assertValueIsSet(t, attr)
+
+				if attr == nil || attr.StringValue == nil {
+					continue
+				}
+
+				assert.Equal(t, tc.expectedValues[a], *attr.StringValue)
+			}
+		})
+	}
+
 }
 
-func TestSuccessfullySetMaxPrice(t *testing.T) {
-	ts := setupTest(t)
-
-	assert.Nil(t, ts.sender.MessageAttributes[sms.MaxPriceSMSAttribute])
-
-	var expectedMaxPrice float32 = 0.05
-	ts.sender.WithMaxPrice(expectedMaxPrice)
-
-	assert.NotNil(t, ts.sender.MessageAttributes[sms.MaxPriceSMSAttribute].StringValue)
-	assert.Equal(t, fmt.Sprintf("%.2f", expectedMaxPrice),
-		*ts.sender.MessageAttributes[sms.MaxPriceSMSAttribute].StringValue)
+func strp(s string) *string {
+	return &s
 }
 
-func TestMaxPriceNotSetIfGivenValueIsBellowOneCent(t *testing.T) {
-	ts := setupTest(t)
-
-	assert.Nil(t, ts.sender.MessageAttributes[sms.MaxPriceSMSAttribute])
-
-	expectedMaxPrice := float32(0.00)
-	ts.sender.WithMaxPrice(expectedMaxPrice)
-
-	assert.Nil(t, ts.sender.MessageAttributes[sms.MaxPriceSMSAttribute])
-}
-
-func TestSenderIDNotSetIfGivenValueIsEmptyString(t *testing.T) {
-	ts := setupTest(t)
-
-	assert.Nil(t, ts.sender.MessageAttributes[sms.SenderIDSMSAttribute])
-
-	ts.sender.WithSenderID("")
-
-	assert.Nil(t, ts.sender.MessageAttributes[sms.SenderIDSMSAttribute])
-}
-
-func TestSuccessfullySetMessageTypeAsPromotional(t *testing.T) {
-	ts := setupTest(t)
-
-	assert.Nil(t, ts.sender.MessageAttributes[sms.MessageTypeSMSAttribute])
-
-	expectedMessageType := sms.Promotional
-	ts.sender.WithMessageType(expectedMessageType)
-
-	assert.NotNil(t, ts.sender.MessageAttributes[sms.MessageTypeSMSAttribute].StringValue)
-	assert.Equal(t, string(expectedMessageType), *ts.sender.MessageAttributes[sms.MessageTypeSMSAttribute].StringValue)
-}
-
-func TestSuccessfullySetMessageTypeAsTransactional(t *testing.T) {
-	ts := setupTest(t)
-
-	assert.Nil(t, ts.sender.MessageAttributes[sms.MessageTypeSMSAttribute])
-
-	expectedMessageType := sms.Transactional
-	ts.sender.WithMessageType(expectedMessageType)
-
-	assert.NotNil(t, ts.sender.MessageAttributes[sms.MessageTypeSMSAttribute].StringValue)
-	assert.Equal(t, string(expectedMessageType), *ts.sender.MessageAttributes[sms.MessageTypeSMSAttribute].StringValue)
-}
-
-func TestSuccessfullyCreatedMessageAttributesFromConfig(t *testing.T) {
-	expectedSenderID := "test-sender-id"
-	expectedMaxPrice := float32(0.07)
-	expectedMessageType := string(sms.Promotional)
-
-	attrs := sms.GetMessageAttributes(&sms.Config{
-		SenderID:    &expectedSenderID,
-		MaxPrice:    &expectedMaxPrice,
-		MessageType: &expectedMessageType,
-	})
-
-	assert.Equal(t, expectedSenderID, *attrs[sms.SenderIDSMSAttribute].StringValue)
-	assert.Equal(t, fmt.Sprintf("%.2f", expectedMaxPrice), *attrs[sms.MaxPriceSMSAttribute].StringValue)
-	assert.Equal(t, expectedMessageType, *attrs[sms.MessageTypeSMSAttribute].StringValue)
-}
-
-func TestConfigValuesAreOptionalWhenCreatingMessageAttributesFromConfig(t *testing.T) {
-	attrs := sms.GetMessageAttributes(&sms.Config{})
-
-	assert.Nil(t, attrs[sms.SenderIDSMSAttribute])
-	assert.Nil(t, attrs[sms.MaxPriceSMSAttribute])
-	assert.Nil(t, attrs[sms.MessageTypeSMSAttribute])
+func floatp(f float32) *float32 {
+	return &f
 }

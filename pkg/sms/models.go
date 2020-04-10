@@ -20,6 +20,18 @@ const (
 // MessageType SNS SMS type
 type MessageType string
 
+// IsValid returns true if the message type is either
+// transactional or promotional used to validate that
+// a valid message type is being provided.
+func (mt MessageType) IsValid() bool {
+	return mt == Transactional || mt == Promotional
+}
+
+// String returns message type string value
+func (mt MessageType) String() string {
+	return string(mt)
+}
+
 // Config sender configuration
 type Config struct {
 	AWSAccessKey       string   `yaml:"aws_access_key"`

@@ -2,6 +2,7 @@ package sms
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -63,9 +64,11 @@ func (s *Sender) Send(msg, receiver string) (*string, error) {
 	return resp.MessageId, nil
 }
 
-// WithSenderID will include a sender ID in the sent text message
+// WithSenderID will include a sender ID in the sent text message.
+// Sender ID won't be set when the provided ID contains only whitespaces,
+// to avoid making a request with a bad SMS attribute.
 func (s *Sender) WithSenderID(id string) *Sender {
-	if id == "" {
+	if "" == strings.TrimSpace(id) {
 		return s
 	}
 
@@ -90,8 +93,14 @@ func (s *Sender) WithMaxPrice(p float32) *Sender {
 	return s
 }
 
-// WithMessageType sets the message type
+// WithMessageType sets the message type.
+// The message type will be set only when
+// message type is either transactional or promotional.
 func (s *Sender) WithMessageType(t MessageType) *Sender {
+	if !t.IsValid() {
+		return s
+	}
+
 	mt := string(t)
 	s.MessageAttributes[MessageTypeSMSAttribute] = &sns.MessageAttributeValue{
 		DataType:    aws.String("String"),
