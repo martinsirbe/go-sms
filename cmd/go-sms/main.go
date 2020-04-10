@@ -4,10 +4,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	"gopkg.in/yaml.v2"
-
 	cli "github.com/jawher/mow.cli"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 
 	"github.com/martinsirbe/go-sms/pkg/sms"
 )

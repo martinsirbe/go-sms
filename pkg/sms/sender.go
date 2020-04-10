@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sns/snsiface"
 	"github.com/pkg/errors"
-
 	log "github.com/sirupsen/logrus"
 )
 
