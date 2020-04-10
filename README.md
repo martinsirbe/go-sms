@@ -77,11 +77,9 @@ package main
 import (
 	"io/ioutil"
 
-	"gopkg.in/yaml.v2"
-
-	log "github.com/sirupsen/logrus"
-
 	"github.com/martinsirbe/go-sms/pkg/sms"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 )
 
 func main() {
