@@ -15,7 +15,9 @@ jobs:
           command: go mod download
       - run:
           name: Run golangci-lint.
-          command: make go-lint
+          command: |
+            go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+            golangci-lint run -v
       - run:
           name: Run tests.
           command: make tests

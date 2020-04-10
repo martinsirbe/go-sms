@@ -28,4 +28,4 @@ go-lint:
 		--volume "$$PWD":/src/github.com/martinsirbe/$(PROJECT_NAME) \
 		--workdir /src/github.com/martinsirbe/$(PROJECT_NAME) \
 		golangci/golangci-lint:$(GOLANGCI_LINT_VER) \
-		/bin/bash -c "golangci-lint run -v --config=.golangci.yml"
+		/bin/bash -c "golangci-lint run -v --config=/src/github.com/martinsirbe/$(PROJECT_NAME)/.golangci.yml"
