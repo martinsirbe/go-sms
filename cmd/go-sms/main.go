@@ -27,7 +27,7 @@ func main() {
 	})
 	receiver := app.String(cli.StringOpt{
 		Name:   "receiver",
-		Desc:   "The receiver mobile phone number. (Mandatory)",
+		Desc:   "The receiver mobile phone number (in the E.164 format). (Mandatory)",
 		EnvVar: "RECEIVER",
 	})
 	message := app.String(cli.StringOpt{

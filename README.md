@@ -46,11 +46,12 @@ Short Message Service (SMS) text message sender using AWS Simple Notification Se
                       
 Options:              
   --sender-id     The sender ID which will appear on the receiver's device. (Optional, if provided will override sender ID provided via configuration file.) (env $SENDER_ID)
-  --receiver      The receiver mobile phone number. (Mandatory) (env $RECEIVER)
+  --receiver      The receiver mobile phone number (in the E.164 format). (Mandatory) (env $RECEIVER)
   --message       The text message you wish to send. (Mandatory) (env $MESSAGE)
   --config-path   The path to the configurations file. (Mandatory) (env $GO_SMS_CONFIG_PATH)
 ```
 
+* `receiver` - A mobile phone number in the [E.164][e.164] format.
 * `message` - Can be 160 GSM, 140 ASCII or 70 UCS-2 characters long with a total size limit of 1600 bytes per SMS publish action.  
 * `config-path` - Should point to the configurations file. You can use `config_sample.yaml` as a reference.  
 
@@ -59,7 +60,16 @@ Options:
 ```bash
 go-sms --sender-id=<sender_id> --receiver=<mobile_phone_number> --message=<your_message> --config-path=<path_to_config_file>
 ```
-  
+
+### Docker
+```bash
+docker run --rm -v $PWD:/root/home go-sms:latest /bin/sh -c '/bin/go-sms \
+    --config-path=/root/home/config_sample.yaml \
+    --receiver="+44xxx." \
+    --sender-id=TEST \
+    --message="Hello world!"'    
+```
+
 ### Go
 ```golang
 package main
@@ -93,33 +103,15 @@ func main() {
 ```
 
 ## Tests
-To run tests, just run `make test`.
+To run tests, just run `make tests`.
 ```bash
-?       github.com/martinsirbe/go-sms/cmd/go-sms        [no test files]
-=== RUN   TestSuccessfullyPublishedSMS
---- PASS: TestSuccessfullyPublishedSMS (0.00s)
-=== RUN   TestOnFailedSMSPublishReturnError
---- PASS: TestOnFailedSMSPublishReturnError (0.00s)
-=== RUN   TestSuccessfullySetSenderID
---- PASS: TestSuccessfullySetSenderID (0.00s)
-=== RUN   TestSuccessfullySetMaxPrice
---- PASS: TestSuccessfullySetMaxPrice (0.00s)
-=== RUN   TestMaxPriceNotSetIfGivenValueIsBellowOneCent
---- PASS: TestMaxPriceNotSetIfGivenValueIsBellowOneCent (0.00s)
-=== RUN   TestSenderIDNotSetIfGivenValueIsEmptyString
---- PASS: TestSenderIDNotSetIfGivenValueIsEmptyString (0.00s)
-=== RUN   TestSuccessfullySetMessageTypeAsPromotional
---- PASS: TestSuccessfullySetMessageTypeAsPromotional (0.00s)
-=== RUN   TestSuccessfullySetMessageTypeAsTransactional
---- PASS: TestSuccessfullySetMessageTypeAsTransactional (0.00s)
-=== RUN   TestSuccessfullyCreatedMessageAttributesFromConfig
---- PASS: TestSuccessfullyCreatedMessageAttributesFromConfig (0.00s)
-=== RUN   TestConfigValuesAreOptionalWhenCreatingMessageAttributesFromConfig
---- PASS: TestConfigValuesAreOptionalWhenCreatingMessageAttributesFromConfig (0.00s)
+?   	github.com/martinsirbe/go-sms/cmd/go-sms	[no test files]
+...
 PASS
-coverage: 84.8% of statements
-ok      github.com/martinsirbe/go-sms/pkg/sms   0.020s  coverage: 84.8% of statements
-?       github.com/martinsirbe/go-sms/pkg/sms/mocks     [no test files]
+coverage: 86.5% of statements
+ok  	github.com/martinsirbe/go-sms/pkg/sms	0.043s	coverage: 86.5% of statements
+?   	github.com/martinsirbe/go-sms/pkg/sms/mocks	[no test files]
+
 ```
 
 ## License
@@ -137,3 +129,4 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENCE.md
 [1]: https://docs.aws.amazon.com/sns/latest/dg/sms_supported-countries.html
 [2]: https://aws.amazon.com/sns/sms-pricing/
 [3]: https://github.com/golangci/golangci-lint
+[e.164]: https://en.wikipedia.org/wiki/E.164
