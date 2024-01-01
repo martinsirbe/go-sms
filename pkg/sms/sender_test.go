@@ -4,13 +4,12 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/sns"
-	"github.com/golang/mock/gomock"
+	"github.com/martinsirbe/go-sms/pkg/sms"
+	"github.com/martinsirbe/go-sms/pkg/sms/mocks"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/martinsirbe/go-sms/pkg/sms"
-	"github.com/martinsirbe/go-sms/pkg/sms/mocks"
+	"go.uber.org/mock/gomock"
 )
 
 type testSuite struct {
@@ -203,6 +202,7 @@ func TestMessageAttributesCreatedFromConfig(t *testing.T) {
 			assertValueIsSet: assert.NotEmpty,
 		},
 	} {
+		tc := tc
 		t.Run(name, func(t *testing.T) {
 			t.Log(tc.description)
 			t.Parallel()

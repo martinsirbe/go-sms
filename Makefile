@@ -1,5 +1,5 @@
 PROJECT_NAME := go-sms
-GOLANGCI_LINT_VER := v1.24
+GOLANGCI_LINT_VER := v1.55
 
 .PHONY: go-gen
 go-gen:

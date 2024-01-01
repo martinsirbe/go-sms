@@ -4,8 +4,7 @@ A simple app for sending Short Message Service (SMS) text messages using AWS Sim
 ![json_ast_badge](https://img.shields.io/badge/SNS-green.svg?logo=amazon-aws&style=flat) 
 [![Go Report Card](https://goreportcard.com/badge/github.com/martinsirbe/go-sms)](https://goreportcard.com/report/github.com/martinsirbe/go-sms) 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmartinsirbe%2Fgo-sms.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmartinsirbe%2Fgo-sms?ref=badge_shield) 
-[![codecov](https://codecov.io/gh/martinsirbe/go-sms/branch/master/graph/badge.svg)](https://codecov.io/gh/martinsirbe/go-sms) 
-[![CircleCI](https://circleci.com/gh/martinsirbe/go-sms/tree/master.svg?style=svg)](https://circleci.com/gh/martinsirbe/go-sms/tree/master) 
+[![codecov](https://codecov.io/gh/martinsirbe/go-sms/branch/main/graph/badge.svg)](https://codecov.io/gh/martinsirbe/go-sms) 
 
 
 ## Build

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 
 	cli "github.com/jawher/mow.cli"
@@ -42,7 +41,7 @@ func main() {
 	})
 
 	app.Action = func() {
-		configFile, err := ioutil.ReadFile(*configPath)
+		configFile, err := os.ReadFile(*configPath)
 		if err != nil {
 			log.WithError(err).Fatal("failed to load go-sms config.yaml")
 		}
